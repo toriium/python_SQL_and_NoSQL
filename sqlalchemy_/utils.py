@@ -15,7 +15,7 @@ def create_session():
         session.close()
 
 
-def select_obj_by_id(obj, kw_filters):
+def select_obj(obj, kw_filters):
     with create_session() as session:
         resultado = session.query(obj).filter_by(**kw_filters).first()
         session.close()
