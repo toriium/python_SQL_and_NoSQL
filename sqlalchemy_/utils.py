@@ -29,17 +29,17 @@ def insert_obj(obj):
         session.commit()
 
 
-def update_obj_by_id(obj, obj_id, obj_update):
+def update_obj(obj, kw_filters, obj_update):
     with create_session() as session:
-        session.query(obj).filter_by(id=obj_id).update(obj_update)
+        session.query(obj).filter_by(**kw_filters).update(obj_update)
         session.flush()
         session.commit()
         session.close()
 
 
-def delete_obj_by_id(obj, obj_id):
+def delete_obj(obj, kw_filters):
     with create_session() as session:
-        session.query(obj).filter_by(id=obj_id).delete()
+        session.query(obj).filter_by(**kw_filters).delete()
         session.flush()
         session.commit()
 
@@ -60,10 +60,10 @@ if __name__ == '__main__':
     #     print(var.name)
 
     # Form - 2
-    with create_session() as session:
-        results = session.query(User).all()
-        for row in results:
-            print(row.name)
+    # with create_session() as session:
+    #     results = session.query(User).all()
+    #     for row in results:
+    #         print(row.name)
 
     # ------------------------------------- use of select_obj_by_id -------------------------------------
     # var = select_obj_by_id(obj=User, obj_id=2)
@@ -81,8 +81,8 @@ if __name__ == '__main__':
 
     # ------------------------------------- use of insert_obj -------------------------------------
     # Form - 1
-    obj_user = User(name='nietzsche', age=55)
-    insert_obj(obj=obj_user)
+    # obj_user = User(name='nietzsche', age=55)
+    # insert_obj(obj=obj_user)
 
     # Form - 2
     # obj_user = User()
