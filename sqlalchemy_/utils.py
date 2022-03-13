@@ -1,14 +1,14 @@
 from contextlib import contextmanager
 
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from models import engine, User
 
 
 @contextmanager
-def create_session():
-    Session = sessionmaker(bind=engine)
-    session = Session()
+def create_session() -> Session:
+    session_obj = sessionmaker(bind=engine)
+    session = session_obj()
     try:
         yield session
     finally:
@@ -22,21 +22,21 @@ def select_obj(obj, kw_filters: dict):
         return resultado
 
 
-def insert_obj(obj):
+def insert_obj(obj) -> None:
     with create_session() as session:
         session.add(obj)
         session.flush()
         session.commit()
 
 
-def insert_all_obj(objs: list):
+def insert_all_obj(objs: list) -> None:
     with create_session() as session:
         session.add_all(objs)
         session.flush()
         session.commit()
 
 
-def update_obj(obj, kw_filters: dict, obj_update):
+def update_obj(obj, kw_filters: dict, obj_update) -> None:
     with create_session() as session:
         session.query(obj).filter_by(**kw_filters).update(obj_update)
         session.flush()
@@ -44,7 +44,7 @@ def update_obj(obj, kw_filters: dict, obj_update):
         session.close()
 
 
-def delete_obj(obj, kw_filters: dict):
+def delete_obj(obj, kw_filters: dict) -> None:
     with create_session() as session:
         session.query(obj).filter_by(**kw_filters).delete()
         session.flush()
