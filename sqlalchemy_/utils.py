@@ -15,7 +15,7 @@ def create_session():
         session.close()
 
 
-def select_obj(obj, kw_filters):
+def select_obj(obj, kw_filters: dict):
     with create_session() as session:
         resultado = session.query(obj).filter_by(**kw_filters).first()
         session.close()
@@ -29,7 +29,14 @@ def insert_obj(obj):
         session.commit()
 
 
-def update_obj(obj, kw_filters, obj_update):
+def insert_all_obj(objs: list):
+    with create_session() as session:
+        session.add_all(objs)
+        session.flush()
+        session.commit()
+
+
+def update_obj(obj, kw_filters: dict, obj_update):
     with create_session() as session:
         session.query(obj).filter_by(**kw_filters).update(obj_update)
         session.flush()
@@ -37,7 +44,7 @@ def update_obj(obj, kw_filters, obj_update):
         session.close()
 
 
-def delete_obj(obj, kw_filters):
+def delete_obj(obj, kw_filters: dict):
     with create_session() as session:
         session.query(obj).filter_by(**kw_filters).delete()
         session.flush()
@@ -82,6 +89,12 @@ if __name__ == '__main__':
     # obj_user.name = 'platao'
     # obj_user.age = 65
     # insert_obj(obj=obj_user)
+
+    # ------------------------------------- use of insert_all_obj -------------------------------------
+    # Form - 1
+    # obj_user1 = User(name='zenao', age=55)
+    # obj_user2 = User(name='diogenes', age=55)
+    # insert_all_obj(objs=[obj_user1, obj_user2])
 
     # ------------------------------------- use of delete_obj -------------------------------------
     # delete_obj(obj=User, kw_filters={"id": 1})
