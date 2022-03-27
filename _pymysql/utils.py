@@ -36,6 +36,13 @@ class DataBase:
                 conexao.commit()
 
     @staticmethod
+    def executemany(query: str, arguments: list[list] = None) -> None:
+        with conecta() as conexao:
+            with conexao.cursor() as cursor:
+                cursor.executemany(query, arguments)
+                conexao.commit()
+
+    @staticmethod
     def consult_all(query: str, arguments: list = None) -> list | None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
@@ -44,7 +51,7 @@ class DataBase:
                 return result if result else None
 
     @staticmethod
-    def consult_one(query: str, arguments=None) -> dict | None:
+    def consult_one(query: str, arguments: list = None) -> dict | None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
                 cursor.execute(query, arguments)
@@ -60,3 +67,14 @@ def create_database():
         except:
             traceback.print_exc()
             sleep(2)
+
+
+if __name__ == '__main__':
+    arguments = [
+        ('pa1', 'cli1', 'te1'),
+        ['pa2', 'cli2', 'te2'],
+        ['pa3', 'cli3', 'te3']]
+    sql = 'insert into planets (name,climate,terrain)' \
+          'VALUES (%s,%s,%s)'
+    DataBase.executemany(query=sql,
+                         arguments=arguments)
