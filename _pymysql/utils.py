@@ -1,7 +1,10 @@
-import traceback
-from time import sleep
-import pymysql.cursors
+from __future__ import annotations
+
 from contextlib import contextmanager
+from time import sleep
+import traceback
+
+import pymysql.cursors
 
 from database_shema import SCHEMA_DDL
 
@@ -11,9 +14,9 @@ def conecta():
     conexao = pymysql.connect(
         host='localhost',
         user='root',
-        password='123',
+        password='',
         port=3306,
-        db='testedb',
+        db='starwars',
         charset='utf8mb4',
         cursorclass=pymysql.cursors.DictCursor
     )
@@ -26,18 +29,27 @@ def conecta():
 
 class DataBase:
     @staticmethod
-    def execute(sql, args=None):
+    def execute(sql, args=None) -> None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
                 cursor.execute(sql, args)
                 conexao.commit()
 
     @staticmethod
-    def consult(sql, args=None):
+    def consult_all(sql, args=None) -> list | None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
                 cursor.execute(sql, args)
-                return cursor.fetchall()
+                result = cursor.fetchall()
+                return result if result else None
+
+    @staticmethod
+    def consult_one(sql, args=None) -> dict | None:
+        with conecta() as conexao:
+            with conexao.cursor() as cursor:
+                cursor.execute(sql, args)
+                result = cursor.fetchone()
+                return result if result else None
 
 
 def create_database():
