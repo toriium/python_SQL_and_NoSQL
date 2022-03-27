@@ -29,25 +29,25 @@ def conecta():
 
 class DataBase:
     @staticmethod
-    def execute(sql, args=None) -> None:
+    def execute(query: str, arguments: list = None) -> None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
-                cursor.execute(sql, args)
+                cursor.execute(query, arguments)
                 conexao.commit()
 
     @staticmethod
-    def consult_all(sql, args=None) -> list | None:
+    def consult_all(query: str, arguments: list = None) -> list | None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
-                cursor.execute(sql, args)
+                cursor.execute(query, arguments)
                 result = cursor.fetchall()
                 return result if result else None
 
     @staticmethod
-    def consult_one(sql, args=None) -> dict | None:
+    def consult_one(query: str, arguments=None) -> dict | None:
         with conecta() as conexao:
             with conexao.cursor() as cursor:
-                cursor.execute(sql, args)
+                cursor.execute(query, arguments)
                 result = cursor.fetchone()
                 return result if result else None
 
