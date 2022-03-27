@@ -1,14 +1,13 @@
 from contextlib import contextmanager
 
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session
 
-from models import engine, User
+from models import SessionLocal, User
 
 
 @contextmanager
 def create_session() -> Session:
-    session_obj = sessionmaker(bind=engine)
-    session = session_obj()
+    session = SessionLocal()
     try:
         yield session
     finally:
