@@ -70,11 +70,4 @@ def create_database():
 
 
 if __name__ == '__main__':
-    arguments = [
-        ('pa1', 'cli1', 'te1'),
-        ['pa2', 'cli2', 'te2'],
-        ['pa3', 'cli3', 'te3']]
-    sql = 'insert into planets (name,climate,terrain)' \
-          'VALUES (%s,%s,%s)'
-    DataBase.executemany(query=sql,
-                         arguments=arguments)
+    ...
