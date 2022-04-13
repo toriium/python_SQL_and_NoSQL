@@ -22,7 +22,7 @@ class User(Base, SerializerMixin):
     age = Column(Integer)
 
     def __repr__(self):
-        return f'User(id={self.id}, name={self.name}, age={self.age})'
+        return str(self.to_dict())
 
 
 def create_database():
