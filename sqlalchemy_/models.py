@@ -1,3 +1,6 @@
+import traceback
+from time import sleep
+
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -23,9 +26,16 @@ class User(Base, SerializerMixin):
 
 
 def create_database():
-    Base.metadata.create_all(engine)
+    for _ in range(10):
+        sleep(10)
+        try:
+            Base.metadata.drop_all(bind=engine)
+            Base.metadata.create_all(bind=engine)
+            break
+        except:
+            traceback.print_exc()
+            sleep(2)
 
 
-create_database()
 if __name__ == '__main__':
     create_database()
