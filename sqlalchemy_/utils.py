@@ -14,11 +14,18 @@ def create_session() -> Session:
         session.close()
 
 
-def select_obj(obj, kw_filters: dict):
+def select_first_obj(obj, kw_filters: dict):
     with create_session() as session:
-        resultado = session.query(obj).filter_by(**kw_filters).first()
+        query_result = session.query(obj).filter_by(**kw_filters).first()
         session.close()
-        return resultado
+        return query_result
+
+
+def select_all_obj(obj, kw_filters: dict):
+    with create_session() as session:
+        query_result = session.query(obj).filter_by(**kw_filters).all()
+        session.close()
+        return query_result
 
 
 def insert_obj(obj) -> None:
