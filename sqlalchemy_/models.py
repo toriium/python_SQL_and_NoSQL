@@ -8,6 +8,7 @@ from sqlalchemy_serializer import SerializerMixin
 
 # url = f'mysql://{user_name}:{password}@{host}:{port}/{schema_name}'
 # engine = create_engine('mysql://root:123@mysql_server:3306/testedb', echo=False)
+# engine = create_engine('mysql+mysqlconnector://root:123@mysql_server:3306/testedb', echo=False)
 engine = create_engine('sqlite:///teste.db', echo=False)
 Base = declarative_base()
 
