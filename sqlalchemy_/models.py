@@ -11,7 +11,7 @@ from sqlalchemy_serializer import SerializerMixin
 engine = create_engine('sqlite:///teste.db', echo=False)
 Base = declarative_base()
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
 
 class User(Base, SerializerMixin):
