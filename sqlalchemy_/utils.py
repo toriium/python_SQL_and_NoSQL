@@ -2,7 +2,8 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from models import SessionLocal, User
+from sqlalchemy_.connection import SessionLocal
+from sqlalchemy_.models import User
 
 
 @contextmanager
@@ -157,15 +158,3 @@ if __name__ == '__main__':
 
     # ------------------------------------- use of delete_obj -------------------------------------
     # delete_obj(obj=User, kw_filters={"id": 1})
-
-    # ------------------------------------- use of SerializerMixin -------------------------------------
-    # Form - 1
-    # with create_session() as session:
-    #     var = session.query(User).filter_by(id=2).first()
-    #     print(var.to_dict())
-
-    # Form - 2
-    # with create_session() as session:
-    #     results = session.query(User).all()
-    #     results_dict = [result.to_dict() for result in results]
-    #     print(results_dict)

@@ -6,13 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_serializer import SerializerMixin
 
-# url = f'mysql://{user_name}:{password}@{host}:{port}/{schema_name}'
-# engine = create_engine('mysql://root:123@mysql_server:3306/testedb', echo=False)
-# engine = create_engine('mysql+mysqlconnector://root:123@mysql_server:3306/testedb', echo=False)
-engine = create_engine('sqlite:///teste.db', echo=False)
-Base = declarative_base()
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
+from sqlalchemy_.base import Base
+from sqlalchemy_.connection import engine
 
 
 class User(Base, SerializerMixin):
