@@ -6,8 +6,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_serializer import SerializerMixin
 
-from sqlalchemy_.base import Base
-from sqlalchemy_.connection import engine
+from ex_sqlalchemy.base import Base
+from ex_sqlalchemy.connection import engine
 
 
 class User(Base, SerializerMixin):

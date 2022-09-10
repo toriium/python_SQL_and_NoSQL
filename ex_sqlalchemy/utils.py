@@ -1,9 +1,10 @@
 from contextlib import contextmanager
+from copy import copy
 
 from sqlalchemy.orm import Session
 
-from sqlalchemy_.connection import SessionLocal
-from sqlalchemy_.models import User
+from connection import SessionLocal
+from ex_sqlalchemy.models import User
 
 
 @contextmanager
@@ -27,18 +28,19 @@ def create_session() -> Session:
         session.close()
 
 
-def select_first_obj(obj, kw_filters: dict):
+def select_first_obj(obj_table, kw_filters: dict):
     """
     Way - 1
     var = select_first_obj(obj=User, kw_filters={"id": 1})
     print(var)
     """
     with create_session() as session:
-        query_result = session.query(obj).filter_by(**kw_filters).first()
-        return query_result
+        query_result = session.query(obj_table).filter_by(**kw_filters).first()
+
+    return query_result if query_result else None
 
 
-def select_all_obj(obj, kw_filters: dict):
+def select_all_obj(obj_table, kw_filters: dict):
     """
     Way - 1
     vars = select_all_obj(obj=User, kw_filters={"id": 1})
@@ -46,11 +48,12 @@ def select_all_obj(obj, kw_filters: dict):
         print(var)
     """
     with create_session() as session:
-        query_result = session.query(obj).filter_by(**kw_filters).all()
-        return query_result
+        query_result = session.query(obj_table).filter_by(**kw_filters).all()
+
+    return query_result if query_result else None
 
 
-def insert_obj(obj) -> None:
+def insert_obj(obj):
     """
     Way - 1
     obj_user = User(name='nietzsche', age=55)
@@ -65,10 +68,13 @@ def insert_obj(obj) -> None:
     with create_session() as session:
         session.add(obj)
         session.flush()
+        updated_obj_data = copy(obj)
         session.commit()
 
+    return updated_obj_data
 
-def insert_all_obj(objs: list) -> None:
+
+def insert_all_obj(objs: list):
     """
     Way - 1
     obj_user1 = User(name='zenao', age=55)
@@ -78,10 +84,13 @@ def insert_all_obj(objs: list) -> None:
     with create_session() as session:
         session.add_all(objs)
         session.flush()
+        updated_obj_data = copy(objs)
         session.commit()
 
+    return objs
 
-def update_obj(obj, kw_filters: dict, obj_update) -> None:
+
+def update_obj(obj_table, kw_filters: dict, obj_update):
     """
     Way - 1
     update_obj(obj=User, kw_filters={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
@@ -93,19 +102,21 @@ def update_obj(obj, kw_filters: dict, obj_update) -> None:
     update_obj(obj=User, kw_filters={"id": 1}, obj_update=update_dict)
     """
     with create_session() as session:
-        session.query(obj).filter_by(**kw_filters).update(obj_update)
+        session.query(obj_table).filter_by(**kw_filters).update(obj_update)
         session.flush()
+        updated_obj_data = copy(obj_update)
         session.commit()
-        session.close()
+
+    return updated_obj_data
 
 
-def delete_obj(obj, kw_filters: dict) -> None:
+def delete_obj(obj_table, kw_filters: dict) -> None:
     """
     Way - 1
     delete_obj(obj=User, kw_filters={"id": 1})
     """
     with create_session() as session:
-        session.query(obj).filter_by(**kw_filters).delete()
+        session.query(obj_table).filter_by(**kw_filters).delete()
         session.flush()
         session.commit()
 
