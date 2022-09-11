@@ -1,10 +1,12 @@
+from typing import Any, Union
 from contextlib import contextmanager
 from copy import copy
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from connection import SessionLocal
-from ex_sqlalchemy.models import User
+from errors.sql_error import SQLError
 
 
 @contextmanager
@@ -53,7 +55,7 @@ def select_all_obj(obj_table, kw_filters: dict):
     return query_result if query_result else None
 
 
-def insert_obj(obj):
+def insert_obj(obj) -> tuple[Any, Union[SQLError, None]]:
     """
     Way - 1
     obj_user = User(name='nietzsche', age=55)
@@ -65,13 +67,20 @@ def insert_obj(obj):
     obj_user.age = 65
     insert_obj(obj=obj_user)
     """
-    with create_session() as session:
-        session.add(obj)
-        session.flush()
-        updated_obj_data = copy(obj)
-        session.commit()
+    try:
+        with create_session() as session:
+            session.add(obj)
+            session.flush()
+            updated_obj_data = copy(obj)
+            session.commit()
+    except IntegrityError as error:
+        is_duplicate_entry = "1062 (23000): Duplicate entry" in str(error.orig)
+        if is_duplicate_entry:
+            return None, SQLError.duplicate_entry
+        else:
+            raise Exception("IntegrityError SQL error")
 
-    return updated_obj_data
+    return updated_obj_data, None
 
 
 def insert_all_obj(objs: list):
@@ -87,7 +96,7 @@ def insert_all_obj(objs: list):
         updated_obj_data = copy(objs)
         session.commit()
 
-    return objs
+    return updated_obj_data
 
 
 def update_obj(obj_table, kw_filters: dict, obj_update):
