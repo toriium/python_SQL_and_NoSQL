@@ -9,7 +9,7 @@ from ex_redis.client import get_client
 
 class RedisRepository:
     # -------------------------------------------------------------- #
-    #                               SET
+    #                               GENERAL
     # -------------------------------------------------------------- #
     @staticmethod
     def set(key_name: str, key_value: str, expiration: int) -> None:
@@ -22,18 +22,6 @@ class RedisRepository:
             )
 
     @staticmethod
-    def hset(hash_name: str, key_name: str, key_value: str) -> None:
-        """Set the string value of a hash field"""
-        with get_client() as client:
-            client.hset(
-                name=hash_name,
-                key=key_name,
-                value=key_value)
-
-    # -------------------------------------------------------------- #
-    #                               GET
-    # -------------------------------------------------------------- #
-    @staticmethod
     def get(key_name: str) -> tuple[Union[str, None], Union[RedisError, None]]:
         """Get the value of key"""
         with get_client() as client:
@@ -44,14 +32,20 @@ class RedisRepository:
             return response, None
 
     @staticmethod
-    def hget(hash_name: str, key_name: str) -> tuple[Union[str, None], Union[RedisError, None]]:
-        """Get the value of a hash field"""
+    def delete(key_name: str) -> None:
+        """Delete a key"""
         with get_client() as client:
-            response = client.hget(name=hash_name, key=key_name)
-            if response is None:
-                return None, RedisError.nonexistent_key
+            client.delete(key_name)
 
-            return response, None
+    @staticmethod
+    def exists(key_name: str) -> bool:
+        """Veryfi if a key exists"""
+        with get_client() as client:
+            exists = client.exists(key_name)
+            if exists:
+                return True
+            else:
+                return False
 
     # -------------------------------------------------------------- #
     #                               TTL
@@ -82,19 +76,42 @@ class RedisRepository:
                 return ttl, None
 
     # -------------------------------------------------------------- #
-    #                               DELETE
+    #                               HASH
     # -------------------------------------------------------------- #
     @staticmethod
-    def delete(key_name: str) -> None:
-        """Delete a key"""
+    def hset(hash_name: str, key_name: str, key_value: str) -> None:
+        """Set the string value of a hash field"""
         with get_client() as client:
-            client.delete(key_name)
+            client.hset(
+                name=hash_name,
+                key=key_name,
+                value=key_value)
+
+    @staticmethod
+    def hget(hash_name: str, key_name: str) -> tuple[Union[str, None], Union[RedisError, None]]:
+        """Get the value of a hash field"""
+        with get_client() as client:
+            response = client.hget(name=hash_name, key=key_name)
+            if response is None:
+                return None, RedisError.nonexistent_key
+
+            return response, None
 
     @staticmethod
     def hdel(hash_name: str, key_name: str) -> None:
         """Delete one or more filds in a hash"""
         with get_client() as client:
             client.hdel(hash_name, key_name)
+
+    @staticmethod
+    def hexists(hash_name: str, key_name: str) -> bool:
+        """Determine if a hash field exists"""
+        with get_client() as client:
+            exists = client.hexists(name=hash_name, key=key_name)
+            if exists:
+                return True
+            else:
+                return False
 
     # -------------------------------------------------------------- #
     #                               FLUSH
@@ -111,29 +128,7 @@ class RedisRepository:
         with get_client() as client:
             client.flushall()
 
-    # -------------------------------------------------------------- #
-    #                               EXIST
-    # -------------------------------------------------------------- #
-    @staticmethod
-    def exists(key_name: str) -> bool:
-        """Veryfi if a key exists"""
-        with get_client() as client:
-            exists = client.exists(key_name)
-            if exists:
-                return True
-            else:
-                return False
-
-    @staticmethod
-    def hexists(hash_name: str, key_name: str) -> bool:
-        """Determine if a hash field exists"""
-        with get_client() as client:
-            exists = client.hexists(name=hash_name, key=key_name)
-            if exists:
-                return True
-            else:
-                return False
-
 
 if __name__ == '__main__':
     RedisRepository.hset(hash_name='hash_name', key_name='key_name1', key_value='key_value1')
+    # RedisRepository.expire(key_name='hash_name', time=10)
