@@ -92,7 +92,7 @@ class RedisRepository:
 
     @staticmethod
     def hdel(hash_name: str, key_name: str) -> None:
-        """Delete a key"""
+        """Delete one or more filds in a hash"""
         with get_client() as client:
             client.hdel(hash_name, key_name)
 
@@ -115,10 +115,20 @@ class RedisRepository:
     #                               EXIST
     # -------------------------------------------------------------- #
     @staticmethod
-    def key_exists(key_name: str) -> bool:
+    def exists(key_name: str) -> bool:
         """Veryfi if a key exists"""
         with get_client() as client:
             exists = client.exists(key_name)
+            if exists:
+                return True
+            else:
+                return False
+
+    @staticmethod
+    def hexists(hash_name: str, key_name: str) -> bool:
+        """Determine if a hash field exists"""
+        with get_client() as client:
+            exists = client.hexists(name=hash_name, key=key_name)
             if exists:
                 return True
             else:
