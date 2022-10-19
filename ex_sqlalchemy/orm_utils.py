@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, Optional
 from contextlib import contextmanager
 from copy import copy
 
@@ -33,7 +33,7 @@ def create_session() -> Session:
 def select_first_obj(obj_table, filter_by: dict):
     """
     Way - 1
-    var = select_first_obj(obj=User, kw_filters={"id": 1})
+    var = select_first_obj(obj=User, filter_by={"id": 1})
     print(var)
     """
     with create_session() as session:
@@ -45,7 +45,7 @@ def select_first_obj(obj_table, filter_by: dict):
 def select_all_obj(obj_table, filter_by: dict):
     """
     Way - 1
-    vars = select_all_obj(obj=User, kw_filters={"id": 1})
+    vars = select_all_obj(obj=User, filter_by={"id": 1})
     for var in vars:
         print(var)
     """
@@ -55,7 +55,7 @@ def select_all_obj(obj_table, filter_by: dict):
     return query_result if query_result else None
 
 
-def insert_obj(obj) -> tuple[Any, Union[SQLError, None]]:
+def insert_obj(obj) -> tuple[Any, Optional[SQLError]]:
     """
     Way - 1
     obj_user = User(name='nietzsche', age=55)
@@ -102,13 +102,13 @@ def insert_all_obj(objs: list):
 def update_obj(obj_table, filter_by: dict, obj_update):
     """
     Way - 1
-    update_obj(obj=User, kw_filters={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
+    update_obj(obj=User, filter_by={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
     ----------------------------------------------------
     Way - 2
     update_dict = {}
     update_dict[User.name] = 'aristoteles'
     update_dict[User.age] = 48
-    update_obj(obj=User, kw_filters={"id": 1}, obj_update=update_dict)
+    update_obj(obj=User, filter_by={"id": 1}, obj_update=update_dict)
     """
     with create_session() as session:
         session.query(obj_table).filter_by(**filter_by).update(obj_update)
@@ -119,15 +119,20 @@ def update_obj(obj_table, filter_by: dict, obj_update):
     return updated_obj_data
 
 
-def delete_obj(obj_table, filter_by: dict) -> None:
+def delete_obj(obj_table, filter_by: dict) -> Optional[SQLError]:
     """
     Way - 1
-    delete_obj(obj=User, kw_filters={"id": 1})
+    delete_obj(obj=User, filter_by={"id": 1})
     """
     with create_session() as session:
-        session.query(obj_table).filter_by(**filter_by).delete()
+        qtd_rows = session.query(obj_table).filter_by(**filter_by).delete()
         session.flush()
         session.commit()
+
+    if qtd_rows >= 1:
+        return None
+    else:
+        return SQLError.not_found
 
 
 if __name__ == '__main__':
@@ -146,18 +151,18 @@ if __name__ == '__main__':
     #         print(row.name)
 
     # ------------------------------------- use of select_obj -------------------------------------
-    # var = select_obj(obj=User, kw_filters={"id": 1})
+    # var = select_obj(obj=User, filter_by={"id": 1})
     # print(var)
 
     # ------------------------------------- use of update_obj -------------------------------------
     # Form - 1
-    # update_obj(obj=User, kw_filters={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
+    # update_obj(obj=User, filter_by={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
 
     # Form - 2
     # update_dict = {}
     # update_dict[User.name] = 'aristoteles'
     # update_dict[User.age] = 48
-    # update_obj(obj=User, kw_filters={"id": 1}, obj_update=update_dict)
+    # update_obj(obj=User, filter_by={"id": 1}, obj_update=update_dict)
 
     # ------------------------------------- use of insert_obj -------------------------------------
     # Form - 1
@@ -177,4 +182,4 @@ if __name__ == '__main__':
     # insert_all_obj(objs=[obj_user1, obj_user2])
 
     # ------------------------------------- use of delete_obj -------------------------------------
-    # delete_obj(obj=User, kw_filters={"id": 1})
+    # delete_obj(obj=User, filter_by={"id": 1})
