@@ -126,7 +126,6 @@ def delete_obj(obj_table, filter_by: dict) -> Optional[SQLError]:
     """
     with create_session() as session:
         qtd_rows = session.query(obj_table).filter_by(**filter_by).delete()
-        session.flush()
         session.commit()
 
     if qtd_rows >= 1:
