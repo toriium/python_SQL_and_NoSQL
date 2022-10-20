@@ -1,19 +1,21 @@
-from typing import Union, List
+from typing import Optional
 
 from contextlib import contextmanager
 import mysql.connector
 from mysql.connector import MySQLConnection
 from mysql.connector.cursor import CursorBase
 
+from settings import DatabaseEnv
+
 
 @contextmanager
 def get_connection() -> MySQLConnection:
     conexao = mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='',
-        port=3306,
-        db='starwars',
+        host=DatabaseEnv.DB_HOST,
+        user=DatabaseEnv.DB_USER,
+        password=DatabaseEnv.DB_PASSWORD,
+        port=DatabaseEnv.DB_PORT,
+        db=DatabaseEnv.DB_NAME,
     )
 
     try:
@@ -24,41 +26,41 @@ def get_connection() -> MySQLConnection:
 
 @contextmanager
 def get_cursor(connection: MySQLConnection) -> CursorBase:
-    cursor = connection.cursor(dictionary=True)
+    cursor = connection.cursor(dictionary=True, buffered=True)
     try:
         yield cursor
     finally:
         cursor.close()
 
 
-class DataBase:
+class DBUtils:
     @staticmethod
-    def execute(query: str, arguments: List = None) -> None:
+    def execute(query: str, params: list = None) -> None:
         with get_connection() as connection:
             with get_cursor(connection) as cursor:
-                cursor.execute(query, arguments)
+                cursor.execute(query, params)
                 connection.commit()
 
     @staticmethod
-    def executemany(query: str, arguments: List[List] = None) -> None:
+    def executemany(query: str, params: list[list] = None) -> None:
         with get_connection() as connection:
             with get_cursor(connection) as cursor:
-                cursor.executemany(query, arguments)
+                cursor.executemany(query, params)
                 connection.commit()
 
     @staticmethod
-    def consult_all(query: str, arguments: List = None) -> Union[List[dict], None]:
+    def consult_all(query: str, params: list = None) -> Optional[list[dict]]:
         with get_connection() as connection:
             with get_cursor(connection) as cursor:
-                cursor.execute(query, arguments)
+                cursor.execute(query, params)
                 result = cursor.fetchall()
                 return result if result else None
 
     @staticmethod
-    def consult_one(query: str, arguments: List = None) -> Union[dict, None]:
+    def consult_one(query: str, params: list = None) -> Optional[dict]:
         with get_connection() as connection:
             with get_cursor(connection) as cursor:
-                cursor.execute(query, arguments)
+                cursor.execute(query, params)
                 result = cursor.fetchone()
                 return result if result else None
 

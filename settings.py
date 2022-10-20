@@ -2,14 +2,8 @@ import os
 
 from dotenv import load_dotenv, find_dotenv
 
-env_path = find_dotenv('../local.env')
+env_path = find_dotenv('local.env')
 load_dotenv(env_path)
-
-
-class FastAPIEnv:
-    APP_HOST: str = os.getenv('APP_HOST')
-    APP_PORT: int = int(os.getenv('APP_PORT'))
-    APP_WORKERS: int = int(os.getenv('APP_WORKERS'))
 
 
 class DatabaseEnv:
