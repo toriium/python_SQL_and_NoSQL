@@ -2,8 +2,8 @@ import pickle
 from functools import wraps
 from typing import Type
 
-from src.infrastructure.redis.redis_utils import RedisUtils
-from src.infrastructure.redis.cache_expiration import CacheExpiration
+from redis_utils import RedisUtils
+from cache_expiration import CacheExpiration
 
 
 def get_cache_1_return(key: str, expiration: int = CacheExpiration.ONE_HOUR) -> Type["Response"]:

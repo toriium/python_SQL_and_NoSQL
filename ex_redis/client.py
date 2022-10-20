@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from redis.client import Redis
 import redis
 
-from src.settings import RedisEnv
+from settings import RedisEnv
 
 
 @contextmanager
