@@ -99,7 +99,7 @@ def insert_all_obj(objs: list):
     return updated_obj_data
 
 
-def update_obj(obj_table, filter_by: dict, obj_update):
+def update_obj(obj_table, filter_by: dict, obj_update)-> tuple[Any, Optional[SQLError]]:
     """
     Way - 1
     update_obj(obj=User, filter_by={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
@@ -111,12 +111,15 @@ def update_obj(obj_table, filter_by: dict, obj_update):
     update_obj(obj=User, filter_by={"id": 1}, obj_update=update_dict)
     """
     with create_session() as session:
-        session.query(obj_table).filter_by(**filter_by).update(obj_update)
+        qtd_rows = session.query(obj_table).filter_by(**filter_by).update(obj_update)
         session.flush()
         updated_obj_data = copy(obj_update)
         session.commit()
 
-    return updated_obj_data
+    if qtd_rows >= 1:
+        return updated_obj_data, None
+    else:
+        return updated_obj_data, SQLError.not_found
 
 
 def delete_obj(obj_table, filter_by: dict) -> Optional[SQLError]:
