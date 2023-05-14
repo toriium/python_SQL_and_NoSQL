@@ -1,5 +1,8 @@
 from datetime import datetime
 from pprint import pprint
+
+from elasticsearch.exceptions import NotFoundError
+
 from elasticsearch import Elasticsearch
 
 
@@ -24,10 +27,11 @@ def search_data():
     body = {
         "query": {
             "match": {
-                "nome": ""+nome+""
+                "nome": "" + nome + ""
             }
 
-        }}
+        }
+    }
 
     response = es.search(index='index_test', body=body)
     pprint(response)
@@ -47,5 +51,15 @@ def insert_data():
     pprint(response['result'])
 
 
+def delete_data():
+    es = get_elastic()
+
+    try:
+        response = es.delete(index='index_test', id=2)
+        print(response)
+    except NotFoundError:
+        print('data not found to delete')
+
+
 if __name__ == '__main__':
-    search_data()
+    delete_data()
