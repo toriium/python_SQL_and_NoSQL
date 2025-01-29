@@ -1,12 +1,43 @@
 from contextlib import contextmanager
 from copy import copy
-from typing import Any
+from typing import Any, Generator
 
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, DeclarativeBase
+from sqlalchemy.orm.decl_api import DeclarativeAttributeIntercept
 
-from src.data.db_orm.connection import ReadingSession, WritingSession
-from src.data.errors.sql_error import SQLError
+from connection import ReadingSession, WritingSession
+from errors.sql_error import SQLError
+from sqlalchemy import select, insert, update, delete, Table
+
+def dict_diff(old_data: dict, new_data: dict):
+    # Create a dictionary to hold only the fields that differ
+    differences = {}
+
+    # Compare the old and new data
+    for key in new_data:
+        if key not in old_data or old_data[key] != new_data[key]:
+            differences[key] = new_data[key]
+
+    if differences == {}:
+        return None
+    return differences
+
+
+def create_obj_from_diff(old_obj, new_obj):
+    diff_obj = old_obj
+
+    old_dict = old_obj.model_to_dict()
+    new_dict = new_obj.model_to_dict()
+
+    diff_data = dict_diff(old_dict, new_dict)
+    if diff_data is None:
+        return diff_obj
+
+    for k, v in diff_data.items():
+        setattr(diff_obj, k, v)
+
+    return diff_obj
 
 
 @contextmanager
@@ -43,39 +74,49 @@ def create_writing_session() -> Session:
         session.close()
 
 
-def select_first_obj(obj_table, filter_by: dict):
+def select_first_obj(obj_table, where_clauses: list = None) -> Any | None:
     """Way - 1
-    var = select_first_obj(obj=User, filter_by={"id": 1})
-    print(var).
+    result = select_first_obj(obj_table=User, where_clauses=[User.id==2])
     """
+    where_clauses = where_clauses if where_clauses else []
+
+
     with create_reading_session() as session:
-        query_result = session.query(obj_table).filter_by(**filter_by).first()
+        stmt = select(obj_table).where(*where_clauses)
+        result = session.scalar(statement=stmt)
+        result = result
 
-    return query_result if query_result else None
+    return result if result else None
 
 
-def select_all_obj(obj_table, filter_by: dict):
+def select_all_obj(obj_table, where_clauses: list = None) -> list:
     """Way - 1
-    vars = select_all_obj(obj=User, filter_by={"id": 1})
-    for var in vars:
+    result = select_all_obj(obj_table=User, where_clauses=[User.id == 1, User.id != 2])
+    for var in result:
         print(var).
     """
-    with create_reading_session() as session:
-        query_result = session.query(obj_table).filter_by(**filter_by).all()
+    where_clauses = where_clauses if where_clauses else []
 
-    return query_result if query_result else None
+
+    with create_reading_session() as session:
+        stmt = select(obj_table).where(*where_clauses)
+        result = session.execute(statement=stmt)
+        result = result.all()
+
+    return result if result else []
 
 
 def insert_obj(obj) -> tuple[Any, SQLError | None]:
     """Way - 1
     obj_user = User(name='nietzsche', age=55)
-    insert_obj(obj=obj_user)
+    result, err = insert_obj(obj=obj_user)
     ----------------------------------------------------
     Way - 2
     obj_user = User()
     obj_user.name = 'platao'
     obj_user.age = 65
-    insert_obj(obj=obj_user).
+    result, err = insert_obj(obj=obj_user)
+    print(result.name)
     """
     try:
         with create_writing_session() as session:
@@ -115,37 +156,70 @@ def insert_all_obj(objs: list):
     return updated_obj_data
 
 
-def update_obj(obj_table, filter_by: dict, obj_update) -> tuple[Any, SQLError | None]:
-    """Way - 1
-    update_obj(obj=User, filter_by={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
-    ----------------------------------------------------
-    Way - 2
-    update_dict = {}
-    update_dict[User.name] = 'aristoteles'
-    update_dict[User.age] = 48
-    update_obj(obj=User, filter_by={"id": 1}, obj_update=update_dict).
+def update_obj(updated_obj = None, obj_table = None, update_values: dict = None, where_clauses: list = None) -> tuple[Any, SQLError | None]:
     """
+    # Way - 1
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("before:", result)
+    #
+    # result.name = "zezim"
+    # updated, err = update_obj(updated_obj=result)
+    # print("updated", updated)
+    #
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("after:", result)
+
+    # Way - 2
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("before:", result)
+    #
+    # updated, err = update_obj(obj_table=User, update_values=dict(name="54545"), where_clauses=[User.id == 1])
+    # print("updated", updated)
+    #
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("after:", result)
+    """
+    where_clauses = where_clauses if where_clauses else []
+
+    if updated_obj and update_values:
+        raise ValueError('update_obj and update_values cannot both be used together')
+
+
     with create_writing_session() as session:
-        qtd_rows = session.query(obj_table).filter_by(**filter_by).update(obj_update)
-        session.flush()
-        updated_obj_data = copy(obj_update)
+
+        if updated_obj:
+            session.add(updated_obj)
+            session.flush()
+            updated_obj_data = copy(updated_obj)
+            rowcount = 1
+
+        else:
+            stmt = update(obj_table).where(*where_clauses).values(**update_values)
+            result = session.execute(statement=stmt)
+
+            session.flush()
+            updated_obj_data = copy(update_values)
+            rowcount = result.rowcount
         session.commit()
 
-    if qtd_rows >= 1:
+    if rowcount >= 1:
         return updated_obj_data, None
     else:
         return updated_obj_data, SQLError.not_found
 
 
-def delete_obj(obj_table, filter_by: dict) -> SQLError | None:
+def delete_obj(obj_table, where_clauses: list = None) -> SQLError | None:
     """Way - 1
-    delete_obj(obj=User, filter_by={"id": 1}).
+    err = delete_obj(obj_table=User, where_clauses=[User.id != 1])
     """
+    where_clauses = where_clauses if where_clauses else []
+
     with create_writing_session() as session:
-        qtd_rows = session.query(obj_table).filter_by(**filter_by).delete()
+        stmt = delete(obj_table).where(*where_clauses)
+        result = session.execute(statement=stmt)
         session.commit()
 
-    if qtd_rows >= 1:
+    if result.rowcount >= 1:
         return None
     else:
         return SQLError.not_found
@@ -167,29 +241,46 @@ if __name__ == '__main__':
     #         print(row.name)
 
     # ------------------------------------- use of select_obj -------------------------------------
-    # var = select_obj(obj=User, kw_filters={"id": 1})
-    # print(var)
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 2])
+    # print(result)
+
+    # ------------------------------------- use of select_all_obj -------------------------------------
+    # result = select_all_obj(obj_table=User, where_clauses=[User.id == 1, User.id != 2])
+    # print(result)
 
     # ------------------------------------- use of update_obj -------------------------------------
-    # Form - 1
-    # update_obj(obj=User, kw_filters={"id": 1}, obj_update={User.name: 'zabuza', User.age: 50})
+    # Way - 1
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("before:", result)
+    #
+    # result.name = "zezim"
+    # updated, err = update_obj(updated_obj=result)
+    # print("updated", updated)
+    #
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("after:", result)
 
-    # Form - 2
-    # update_dict = {}
-    # update_dict[User.name] = 'aristoteles'
-    # update_dict[User.age] = 48
-    # update_obj(obj=User, kw_filters={"id": 1}, obj_update=update_dict)
+    # Way - 2
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("before:", result)
+    #
+    # updated, err = update_obj(obj_table=User, update_values=dict(name="54545"), where_clauses=[User.id == 1])
+    # print("updated", updated)
+    #
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("after:", result)
 
     # ------------------------------------- use of insert_obj -------------------------------------
-    # Form - 1
-    # obj_user = User(name='nietzsche', age=55)
-    # insert_obj(obj=obj_user)
-
-    # Form - 2
+    # Way - 1
+    # user = User(name="jere")
+    # insert_obj(user)
+    # ----------------------------------------------------
+    # Way - 2
     # obj_user = User()
     # obj_user.name = 'platao'
     # obj_user.age = 65
-    # insert_obj(obj=obj_user)
+    # result, err = insert_obj(obj=obj_user)
+    # print(result.name)
 
     # ------------------------------------- use of insert_all_obj -------------------------------------
     # Form - 1
@@ -198,4 +289,5 @@ if __name__ == '__main__':
     # insert_all_obj(objs=[obj_user1, obj_user2])
 
     # ------------------------------------- use of delete_obj -------------------------------------
-    # delete_obj(obj=User, kw_filters={"id": 1})
+    # err = delete_obj(obj_table=User, where_clauses=[User.id != 1])
+    # print(err)

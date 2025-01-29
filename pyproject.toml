@@ -3,17 +3,18 @@ name = "python_database"
 version = "0.1.0"
 description = ""
 authors = ["Jorge Vasconcelos <jorge.r.p.v@hotmail.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = "^3.8"
-SQLAlchemy = "^1.4.32"
-SQLAlchemy-serializer = "^1.4.1"
-PyMySQL = "^1.0.2"
-mysql-connector-python = "^8.0.28"
-redis = "^4.3.1"
-python-dotenv = "^0.21.0"
-greenlet = "2.0.2"
-elasticsearch = "7.14.0"
+python = "^3.12"
+SQLAlchemy = "*"
+SQLAlchemy-serializer = "*"
+PyMySQL = "*"
+mysql-connector-python = "*"
+redis = "*"
+python-dotenv = "*"
+
+# elasticsearch = "7.14.0"
 
 [tool.poetry.dev-dependencies]
 

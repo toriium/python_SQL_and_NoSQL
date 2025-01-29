@@ -1,13 +1,11 @@
 import traceback
 from time import sleep
 
-from sqlalchemy import create_engine, Column, Integer, String
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String
 from sqlalchemy_serializer import SerializerMixin
+from connection import writing_engine
 
-from ex_sqlalchemy.base import Base
-from ex_sqlalchemy.connection import engine
+from base import Base
 
 
 class User(Base, SerializerMixin):
@@ -21,17 +19,15 @@ class User(Base, SerializerMixin):
         return str(self.to_dict())
 
 
-def create_database():
+def recreate_tables():
     for _ in range(10):
-        sleep(10)
         try:
-            Base.metadata.drop_all(bind=engine)
-            Base.metadata.create_all(bind=engine)
+            Base.metadata.drop_all(bind=writing_engine)
+            Base.metadata.create_all(bind=writing_engine)
             break
-        except:
-            traceback.print_exc()
+        except Exception as error:
+            print(error)
             sleep(2)
 
-
 if __name__ == '__main__':
-    create_database()
+    recreate_tables()
