@@ -10,13 +10,22 @@ from connection import ReadingSession, WritingSession
 from errors.sql_error import SQLError
 from sqlalchemy import select, insert, update, delete, Table
 
-def dict_diff(old_data: dict, new_data: dict):
+
+def dict_diff(old_data: dict, new_data: dict, keep_old_if_none: bool = False) -> dict:
+    """
+    keep_old_if_none: If the new data field is None will not show the difference, will keep the old value
+    """
+
     # Create a dictionary to hold only the fields that differ
     differences = {}
 
     # Compare the old and new data
     for key in new_data:
-        if key not in old_data or old_data[key] != new_data[key]:
+        new_data_value = new_data[key]
+        if new_data_value is None and keep_old_if_none is True:
+            continue
+
+        if key not in old_data or old_data[key] != new_data_value:
             differences[key] = new_data[key]
 
     if differences == {}:
@@ -24,13 +33,13 @@ def dict_diff(old_data: dict, new_data: dict):
     return differences
 
 
-def create_obj_from_diff(old_obj, new_obj):
+def create_obj_from_diff(old_obj, new_obj, keep_old_if_none: bool = False):
     diff_obj = old_obj
 
     old_dict = old_obj.model_to_dict()
     new_dict = new_obj.model_to_dict()
 
-    diff_data = dict_diff(old_dict, new_dict)
+    diff_data = dict_diff(old_data=old_dict, new_data=new_dict, keep_old_if_none=keep_old_if_none)
     if diff_data is None:
         return diff_obj
 
@@ -80,7 +89,6 @@ def select_first_obj(obj_table, where_clauses: list = None) -> Any | None:
     """
     where_clauses = where_clauses if where_clauses else []
 
-
     with create_reading_session() as session:
         stmt = select(obj_table).where(*where_clauses)
         result = session.scalar(statement=stmt)
@@ -96,7 +104,6 @@ def select_all_obj(obj_table, where_clauses: list = None) -> list:
         print(var).
     """
     where_clauses = where_clauses if where_clauses else []
-
 
     with create_reading_session() as session:
         stmt = select(obj_table).where(*where_clauses)
@@ -156,20 +163,9 @@ def insert_all_obj(objs: list):
     return updated_obj_data
 
 
-def update_obj(updated_obj = None, obj_table = None, update_values: dict = None, where_clauses: list = None) -> tuple[Any, SQLError | None]:
+def update_obj(obj_table, update_values: dict, where_clauses: list = None) -> tuple[Any, SQLError | None]:
     """
     # Way - 1
-    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
-    # print("before:", result)
-    #
-    # result.name = "zezim"
-    # updated, err = update_obj(updated_obj=result)
-    # print("updated", updated)
-    #
-    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
-    # print("after:", result)
-
-    # Way - 2
     # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
     # print("before:", result)
     #
@@ -181,31 +177,45 @@ def update_obj(updated_obj = None, obj_table = None, update_values: dict = None,
     """
     where_clauses = where_clauses if where_clauses else []
 
-    if updated_obj and update_values:
-        raise ValueError('update_obj and update_values cannot both be used together')
-
-
     with create_writing_session() as session:
+        stmt = update(obj_table).where(*where_clauses).values(**update_values)
+        result = session.execute(statement=stmt)
 
-        if updated_obj:
-            session.add(updated_obj)
-            session.flush()
-            updated_obj_data = copy(updated_obj)
-            rowcount = 1
-
-        else:
-            stmt = update(obj_table).where(*where_clauses).values(**update_values)
-            result = session.execute(statement=stmt)
-
-            session.flush()
-            updated_obj_data = copy(update_values)
-            rowcount = result.rowcount
+        session.flush()
+        updated_obj_data = copy(update_values)
+        rowcount = result.rowcount
         session.commit()
 
     if rowcount >= 1:
         return updated_obj_data, None
     else:
         return updated_obj_data, SQLError.not_found
+
+
+def patch_obj(updated_obj) -> tuple[Any, SQLError | None]:
+    """
+    For cases when you queried an object, updated a value and want to update in the DB
+
+    # Way - 1
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("before:", result)
+    #
+    # result.name = "zezim"
+    # updated, err = update_obj(updated_obj=result)
+    # print("updated", updated)
+    #
+    # result = select_first_obj(obj_table=User, where_clauses=[User.id == 1])
+    # print("after:", result)
+    """
+
+    with create_writing_session() as session:
+        session.add(updated_obj)
+        session.flush()
+        updated_obj_data = copy(updated_obj)
+
+        session.commit()
+
+    return updated_obj_data, None
 
 
 def delete_obj(obj_table, where_clauses: list = None) -> SQLError | None:
