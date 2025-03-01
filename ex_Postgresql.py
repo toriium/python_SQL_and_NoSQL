@@ -50,12 +50,12 @@ class DBUtils:
                 connection.commit()
 
     @staticmethod
-    def query_all(query: str, params: list = None) -> list[dict] | None:
+    def query_all(query: str, params: list = None) -> list[dict]:
         with get_connection() as connection:
             with get_cursor(connection) as cursor:
                 cursor.execute(query, params)
                 result = cursor.fetchall()
-                return result if result else None
+                return result if result else []
 
     @staticmethod
     def query_one(query: str, params: list = None) -> dict | None:
