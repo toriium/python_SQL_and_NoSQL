@@ -1,0 +1,16 @@
+version: '3.8'
+
+name: clickhouse-compose
+services:
+  clickhouse-server:
+    image: clickhouse/clickhouse-server
+    container_name: clickhouse-server
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: my_database
+      CLICKHOUSE_USER: username
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    restart: unless-stopped
